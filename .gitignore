@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+server/brahmastra.db
+*.db
+*.db-journal
+quarantine/
+scan_intake/
+test_access.log
+*.log
+.DS_Store
+.idea/
+.vscode/

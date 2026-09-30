@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brahmastra EDR — Command Center</title>
+<style>
+  :root{
+    --bg:#070510;--panel:#120c1f;--panel2:#0d0817;--border:#2a1e3d;
+    --text:#f3ecff;--muted:#9a8bb5;
+    --ember:#ff7a1a;--gold:#ffc24d;--astra:#ff9d2f;
+    --low:#48d19a;--medium:#ffc24d;--high:#ff6b47;--critical:#ff2d55;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(900px 420px at 50% -120px, rgba(255,122,26,.16), transparent 70%),
+      radial-gradient(600px 300px at 85% 0, rgba(255,45,85,.10), transparent 60%),
+      var(--bg);
+    color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;
+    padding:20px;min-height:100vh}
+  .topline{height:2px;border:none;margin-bottom:16px;
+    background:linear-gradient(90deg,transparent,var(--ember),var(--gold),var(--ember),transparent)}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  .brand{display:flex;align-items:center;gap:14px}
+  .tri{font-size:38px;filter:drop-shadow(0 0 10px rgba(255,122,26,.8))}
+  h1{font-size:28px;letter-spacing:6px;font-weight:800;
+     background:linear-gradient(90deg,var(--gold),var(--ember));
+     -webkit-background-clip:text;background-clip:text;color:transparent;
+     text-shadow:0 0 26px rgba(255,122,26,.25)}
+  .tagline{color:var(--astra);font-size:11px;letter-spacing:3px;
+     text-transform:uppercase;margin-top:2px;opacity:.85}
+  .sub{color:var(--muted);font-size:12px;text-align:right}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+         gap:12px;margin:18px 0}
+  .card{background:linear-gradient(160deg,var(--panel),var(--panel2));
+        border:1px solid var(--border);border-radius:12px;padding:15px;
+        box-shadow:0 0 0 1px rgba(255,122,26,.04),0 8px 24px rgba(0,0,0,.4)}
+  .card .num{font-size:30px;font-weight:800}
+  .card .label{color:var(--muted);font-size:11px;text-transform:uppercase;
+               letter-spacing:1.5px;margin-top:4px}
+  .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px}
+  .bar strong{color:var(--muted);font-size:11px;letter-spacing:1px}
+  .bar button,.bar select,.bar input{background:var(--panel);color:var(--text);
+        border:1px solid var(--border);border-radius:8px;padding:7px 13px;
+        font-size:13px;cursor:pointer}
+  .bar button.active{border-color:var(--ember);color:var(--gold);
+        box-shadow:0 0 14px rgba(255,122,26,.35)}
+  .bar input{cursor:text;min-width:180px}
+  .grid{display:grid;grid-template-columns:2.4fr 1fr;gap:16px;align-items:start}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse;
+        background:linear-gradient(160deg,var(--panel),var(--panel2));
+        border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  th{background:rgba(255,122,26,.06);text-align:left;padding:11px;font-size:11px;
+     text-transform:uppercase;letter-spacing:1.5px;color:var(--gold)}
+  td{padding:11px;border-top:1px solid var(--border);font-size:13px;vertical-align:top}
+  tr.main{cursor:pointer;transition:background .15s}
+  tr.main:hover{background:rgba(255,122,26,.06)}
+  .pill{padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800;
+        text-transform:uppercase;white-space:nowrap}
+  .low{background:rgba(72,209,154,.15);color:var(--low)}
+  .medium{background:rgba(255,194,77,.15);color:var(--medium)}
+  .high{background:rgba(255,107,71,.18);color:var(--high)}
+  .critical{background:rgba(255,45,85,.22);color:var(--critical);
+        box-shadow:0 0 12px rgba(255,45,85,.4)}
+  .cat{color:var(--muted);font-size:12px}
+  .host{color:var(--gold);font-weight:700}
+  .detail-cell{background:var(--panel2);padding:18px;
+        border-left:2px solid var(--ember)}
+  .sec{margin-bottom:13px}
+  .sec h4{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;
+          color:var(--ember);margin-bottom:6px}
+  .kv{display:grid;grid-template-columns:150px 1fr;gap:4px 10px;font-size:12px}
+  .kv .k{color:var(--muted)}
+  .kv .v{color:var(--text);word-break:break-all;font-family:monospace}
+  .verdict{color:var(--text);font-style:italic;line-height:1.55}
+  .mitre{color:var(--gold);font-size:12px;margin-top:4px}
+  .resp{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .resp button{background:transparent;border:1px solid var(--high);color:var(--high);
+        border-radius:8px;padding:6px 13px;font-size:12px;cursor:pointer;font-weight:600}
+  .resp button:hover{background:var(--high);color:#000}
+  .resp button.iso{border-color:var(--critical);color:var(--critical)}
+  .resp button.iso:hover{background:var(--critical);color:#fff}
+  .ai-badge{font-size:9px;color:var(--low);border:1px solid var(--low);
+            padding:1px 5px;border-radius:4px;margin-left:6px}
+  .side .card{margin-bottom:16px}
+  .side h3{font-size:13px;text-transform:uppercase;letter-spacing:1.5px;
+           color:var(--gold);margin-bottom:10px}
+  .act{font-size:12px;padding:7px 0;border-top:1px solid var(--border)}
+  .act:first-child{border-top:none}
+  .act .st-done{color:var(--low)}
+  .act .st-failed{color:var(--high)}
+  .act .st-pending,.act .st-sent{color:var(--medium)}
+  #report{white-space:pre-wrap;font-size:12px;line-height:1.55;color:var(--text);
+          max-height:420px;overflow:auto;margin-top:10px}
+  .genbtn{background:linear-gradient(90deg,var(--ember),var(--gold));color:#1a0e00;
+          border:none;border-radius:8px;padding:9px 14px;font-size:13px;
+          font-weight:700;cursor:pointer;width:100%}
+</style>
+</head>
+<body>
+<hr class="topline">
+<header>
+  <div class="brand">
+    <div class="tri">🔱</div>
+    <div>
+      <h1>BRAHMASTRA</h1>
+      <div class="tagline">The weapon that never misses · EDR</div>
+    </div>
+  </div>
+  <div class="sub">AI analyst: llama3.2<br><span id="clock"></span></div>
+</header>
+
+<div class="stats" id="stats"></div>
+
+<div class="bar" id="filters">
+  <strong>SEVERITY:</strong>
+  <button data-sev="all" class="active">All</button>
+  <button data-sev="critical">Critical</button>
+  <button data-sev="high">High</button>
+  <button data-sev="medium">Medium</button>
+  <button data-sev="low">Low</button>
+  <select id="catFilter">
+    <option value="all">All categories</option>
+    <option value="process">Process</option>
+    <option value="file">File</option>
+    <option value="network">Network</option>
+    <option value="web">Web attack</option>
+    <option value="malware">Malware</option>
+    <option value="persistence">Persistence</option>
+    <option value="login">Login</option>
+    <option value="privilege">Privilege</option>
+  </select>
+  <input id="search" placeholder="Search detail / host...">
+</div>
+
+<div class="grid">
+  <div>
+    <table>
+      <thead><tr><th>Time</th><th>Host</th><th>Category</th>
+        <th>Severity</th><th>Detail</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+  <div class="side">
+    <div class="card">
+      <h3>🤖 AI Incident Report</h3>
+      <select id="reportHost" style="width:100%;background:var(--panel2);
+        color:var(--text);border:1px solid var(--border);border-radius:8px;
+        padding:7px;margin-bottom:8px"></select>
+      <button class="genbtn" onclick="genReport()">Generate Report</button>
+      <div id="report"></div>
+    </div>
+    <div class="card">
+      <h3>⚡ Response Actions</h3>
+      <div id="actions"></div>
+    </div>
+  </div>
+</div>
+<script>
+let ALERTS=[], sevFilter="all", openIds=new Set();
+function fmt(ts){return new Date(ts*1000).toLocaleTimeString()}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+
+async function refresh(){
+  try{
+    const stats=await (await fetch('/api/stats')).json();
+    const s=stats.by_severity||{};
+    document.getElementById('stats').innerHTML=`
+      <div class="card"><div class="num">${stats.total}</div><div class="label">Total</div></div>
+      <div class="card"><div class="num" style="color:var(--critical)">${s.critical||0}</div><div class="label">Critical</div></div>
+      <div class="card"><div class="num" style="color:var(--high)">${s.high||0}</div><div class="label">High</div></div>
+      <div class="card"><div class="num" style="color:var(--medium)">${s.medium||0}</div><div class="label">Medium</div></div>
+      <div class="card"><div class="num" style="color:var(--low)">${s.low||0}</div><div class="label">Low</div></div>
+      <div class="card"><div class="num">${Object.keys(stats.by_host||{}).length}</div><div class="label">Hosts</div></div>`;
+    const rh=document.getElementById('reportHost');
+    const hosts=Object.keys(stats.by_host||{});
+    if(rh.options.length!==hosts.length){
+      rh.innerHTML=hosts.map(h=>`<option value="${esc(h)}">${esc(h)}</option>`).join('');
+    }
+    ALERTS=await (await fetch('/api/alerts')).json();
+    renderRows();
+    const acts=await (await fetch('/api/actions')).json();
+    document.getElementById('actions').innerHTML = acts.length ? acts.map(a=>`
+      <div class="act"><span class="host">${esc(a.host)}</span> · ${esc(a.action)}
+      ${a.target?('· '+esc(a.target)):''}
+      <span class="st-${a.status}">[${esc(a.status)}]</span>
+      <div class="cat">${esc(a.result||'')}</div></div>`).join('')
+      : '<div class="cat">No response actions yet.</div>';
+  }catch(e){console.error(e)}
+}
+
+function renderRows(){
+  const cat=document.getElementById('catFilter').value;
+  const q=document.getElementById('search').value.toLowerCase();
+  const rows=ALERTS.filter(a=>{
+    if(sevFilter!=="all" && (a.ai_severity||a.severity)!==sevFilter) return false;
+    if(cat!=="all" && a.category!==cat) return false;
+    if(q && !((a.detail||'').toLowerCase().includes(q)||(a.host||'').toLowerCase().includes(q))) return false;
+    return true;
+  });
+  document.getElementById('rows').innerHTML = rows.map(a=>{
+    const sev=a.ai_severity||a.severity;
+    let out=`<tr class="main" onclick="toggle(${a.id})">
+      <td>${fmt(a.ts)}</td><td class="host">${esc(a.host)}</td>
+      <td class="cat">${esc(a.category)}</td>
+      <td><span class="pill ${sev}">${esc(sev)}</span>${a.ai_used?'<span class="ai-badge">AI</span>':''}</td>
+      <td>${esc(a.detail)}</td></tr>`;
+    if(openIds.has(a.id)) out+=detailRow(a);
+    return out;
+  }).join('');
+}
+
+function detailRow(a){
+  let raw={}; try{raw=JSON.parse(a.raw||'{}')}catch(e){}
+  let ctx=Object.entries(raw).filter(([k])=>k!=='process_tree').map(([k,v])=>
+    `<div class="k">${esc(k)}</div><div class="v">${esc(typeof v==='object'?JSON.stringify(v):v)}</div>`).join('');
+  let tree='';
+  if(raw.process_tree&&raw.process_tree.length){
+    tree=`<div class="sec"><h4>Process Tree (child → parent)</h4><div class="kv">`+
+      raw.process_tree.map(p=>`<div class="k">pid ${esc(p.pid)}</div><div class="v">${esc(p.name)} — ${esc(p.cmd||'')}</div>`).join('')+
+      `</div></div>`;
+  }
+  let btns=`<button class="iso" onclick="respond(event,'${esc(a.host)}','isolate','')">Isolate Host</button>`;
+  if(raw.pid) btns=`<button onclick="respond(event,'${esc(a.host)}','kill','${esc(raw.pid)}')">Kill PID ${esc(raw.pid)}</button>`+btns;
+  if(raw.path) btns=`<button onclick="respond(event,'${esc(a.host)}','quarantine','${esc(raw.path)}')">Quarantine File</button>`+btns;
+  const ip=raw.source_ip||raw.remote;
+  if(ip&&ip!=='unknown') btns=`<button onclick="respond(event,'${esc(a.host)}','block-ip','${esc(ip)}')">Block ${esc(ip)}</button>`+btns;
+  return `<tr><td colspan="5" class="detail-cell">
+    <div class="sec"><h4>AI Analysis</h4>
+      <div class="verdict">${esc(a.ai_verdict||'')}</div>
+      <div class="mitre">MITRE: ${esc(a.ai_mitre||'N/A')}</div>
+      <div class="mitre" style="color:var(--muted)">Recommended: ${esc(a.ai_action||'')}</div>
+      <div class="cat" style="margin-top:4px">Agent risk score: ${esc(a.score)}</div>
+    </div>${tree}
+    <div class="sec"><h4>Context / Evidence</h4><div class="kv">${ctx||'<div class="cat">no extra context</div>'}</div></div>
+    <div class="sec"><h4>Response</h4><div class="resp">${btns}</div></div>
+  </td></tr>`;
+}
+
+function toggle(id){ openIds.has(id)?openIds.delete(id):openIds.add(id); renderRows(); }
+
+async function respond(ev,host,action,target){
+  ev.stopPropagation();
+  if(action==='isolate' && !confirm('Isolate '+host+'? This cuts all its network traffic.')) return;
+  await fetch('/action',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({host,action,target})});
+  alert('Queued: '+action+(target?(' '+target):'')+' on '+host+'. The agent enforces it within a few seconds.');
+}
+
+async function genReport(){
+  const host=document.getElementById('reportHost').value;
+  const box=document.getElementById('report');
+  if(!host){box.textContent='No host selected.';return}
+  box.textContent='Generating report with llama3.2... (a few seconds)';
+  try{
+    const r=await (await fetch('/api/host_report?host='+encodeURIComponent(host))).json();
+    box.textContent=r.report;
+  }catch(e){box.textContent='Failed to generate report.'}
+}
+
+document.getElementById('filters').addEventListener('click',e=>{
+  if(e.target.dataset.sev){
+    sevFilter=e.target.dataset.sev;
+    document.querySelectorAll('#filters button').forEach(b=>b.classList.remove('active'));
+    e.target.classList.add('active'); renderRows();
+  }
+});
+document.getElementById('catFilter').addEventListener('change',renderRows);
+document.getElementById('search').addEventListener('input',renderRows);
+setInterval(()=>{document.getElementById('clock').textContent=new Date().toLocaleString()},1000);
+setInterval(refresh,3000); refresh();
+</script>
+</body>
+</html>
